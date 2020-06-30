@@ -1,0 +1,228 @@
+C51 COMPILER V9.54   ______1_0                                                             10/28/2018 14:36:33 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE ______1_0
+OBJECT MODULE PLACED IN .\Objects\¼ÆËãÆ÷1.0.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ¼ÆËãÆ÷1.0.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings
+                    -\¼ÆËãÆ÷1.0.lst) TABS(2) OBJECT(.\Objects\¼ÆËãÆ÷1.0.obj)
+
+line level    source
+
+   1          #include "reg52.h"    //???
+   2          //???
+   3          #define uint unsigned int
+   4          #define ulongint unsigned long int
+   5          #define uchar unsigned char
+   6          //74LS138??????
+   7          sbit LS_WEA = P1^0;
+   8          sbit LS_WEB = P1^1;
+   9          sbit LS_WEC = P1^2;
+  10          
+  11          uchar code smg_duan[11]={ 
+  12              0x3f,  //  0
+  13              0x06,  //  1
+  14              0x5b,  //  2
+  15              0x4f,  //  3
+  16              0x66,  //  4
+  17              0x6d,  //  5
+  18              0x7d,  //  6
+  19              0x07,  //  7
+  20              0x7f,  //  8
+  21              0x6f,  //  9
+  22              0x00,  //  ??
+  23          };    //?? ????
+  24          uchar display[8]={
+  25              0x00,  //  ??
+  26              0x00,  //  ??
+  27              0x00,  //  ??
+  28              0x00,  //  ??
+  29              0x00,  //  ??
+  30              0x00,  //  ??
+  31              0x00,  //  ??
+  32              0x00,  //  ??
+  33          };    //???????????????
+  34          //????
+  35          uint key_x;   //?????,????????
+  36          uint key_xy;  //?????
+  37          uint key_a;   //???????a
+  38          uint key_b;   //???????b
+  39          ulongint key_output;    //?????
+  40          //????
+  41          void slow_delay(uint a);    //?? T=a(ms)
+  42          void smg_display();   //??????????,??????138???
+  43          uint key();   //??????
+  44          //???
+  45          void main()
+  46          {
+  47   1        P0 = 0x00;
+  48   1        while(1)
+  49   1        {
+  50   2          key_a = key();
+  51   2      
+  52   2        }
+  53   1      }
+  54          //????
+C51 COMPILER V9.54   ______1_0                                                             10/28/2018 14:36:33 PAGE 2   
+
+  55          //?? T=a(ms)
+  56          void slow_delay(uint a)
+  57          {
+  58   1        uint b;
+  59   1        for (; a > 0; a--)
+  60   1          for (b = 124; b > 0; b--);
+  61   1      }
+  62          //??????????,??????138???
+  63          void smg_display()
+  64          {
+  65   1        uchar i;
+  66   1        for(i = 0; i < 8; i++)
+  67   1        {
+  68   2          switch(i)
+  69   2          {
+  70   3            case(0):
+  71   3              LS_WEA = 1; LS_WEB = 1; LS_WEC = 1;   //ABC=000,Y7~Y0=1111 1110,??
+  72   3            break;
+  73   3            case(1):
+  74   3              LS_WEA = 0; LS_WEB = 1; LS_WEC = 1;   //ABC=100,Y7~Y0=1111 1101,??
+  75   3            break;
+  76   3            case(2):
+  77   3              LS_WEA = 1; LS_WEB = 0; LS_WEC = 1;   //ABC=010,Y7~Y0=1111 1011,??
+  78   3            break;
+  79   3            case(3):
+  80   3              LS_WEA = 0; LS_WEB = 0; LS_WEC = 1;   //ABC=110,Y7~Y0=1111 0111,??
+  81   3            break;
+  82   3            case(4):
+  83   3              LS_WEA = 1; LS_WEB = 1; LS_WEC = 0;   //ABC=001,Y7~Y0=1110 1111,??
+  84   3            break;
+  85   3            case(5):
+  86   3              LS_WEA = 0; LS_WEB = 1; LS_WEC = 0;   //ABC=101,Y7~Y0=1101 1111,???
+  87   3            break;
+  88   3            case(6):
+  89   3              LS_WEA = 1; LS_WEB = 0; LS_WEC = 0;   //ABC=011,Y7~Y0=1011 1111,???
+  90   3            break;
+  91   3            case(7):
+  92   3              LS_WEA = 0; LS_WEB = 0; LS_WEC = 0;   //ABC=111,Y7~Y0=0111 1111,???
+  93   3            break;
+  94   3          }
+  95   2          P0 = display[i];    //??
+  96   2          slow_delay(1);    //??
+  97   2          P0 = 0x00;    //??
+  98   2        }
+  99   1      }
+ 100          //??????
+ 101          uint key()
+ 102          {
+ 103   1        uint keynum_x;    //x???
+ 104   1        uint keynum_y;    //y???
+ 105   1        static char Cycle_count;    //????,??????,?????0
+ 106   1        do
+ 107   1        {
+ 108   2          P2 = 0x0f;    //x????,y????
+ 109   2          if(P2 != 0x0f)
+ 110   2          {
+ 111   3            P2 = 0x0f;    //??y????????
+ 112   3            switch(P2)
+ 113   3            {
+ 114   4              case 0x07:keynum_y = 1; break;    //y1??????
+ 115   4              case 0x0b:keynum_y = 2; break;    //y2??????
+ 116   4              case 0x0d:keynum_y = 3; break;    //y3??????
+C51 COMPILER V9.54   ______1_0                                                             10/28/2018 14:36:33 PAGE 3   
+
+ 117   4              case 0x0e:keynum_y = 4; break;    //y4??????
+ 118   4            }
+ 119   3            P2 = 0xf0;    //??x????????
+ 120   3            switch(P2)
+ 121   3            {
+ 122   4              case 0xe0:keynum_x = 1; break;    //x1??????
+ 123   4              case 0xd0:keynum_x = 2; break;    //x2??????
+ 124   4              case 0xb0:keynum_x = 3; break;    //x3??????
+ 125   4              case 0x70:keynum_x = 4; break;    //x4??????
+ 126   4            }
+ 127   3            if(keynum_y == 1 && keynum_x == 1)
+ 128   3              key_x = 0;    //??????????(1,1)???,????????0
+ 129   3            if(keynum_y == 1 && keynum_x == 2)
+ 130   3              key_x = 1;    //??????????(1,2)???,????????1
+ 131   3            if(keynum_y == 1 && keynum_x == 3)
+ 132   3              key_x = 2;    //??????????(1,3)???,????????2
+ 133   3            if(keynum_y == 1 && keynum_x == 4)
+ 134   3              key_x = 10;   //??????????(1,4)???,????????10,????10??“+”
+ 135   3            if(keynum_y == 2 && keynum_x == 1)
+ 136   3              key_x = 3;    //??????????(2,1)???,????????3
+ 137   3            if(keynum_y == 2 && keynum_x == 2)
+ 138   3              key_x = 4;    //??????????(2,2)???,????????4
+ 139   3            if(keynum_y == 2 && keynum_x == 3)
+ 140   3              key_x = 5;    //??????????(2,3)???,????????5
+ 141   3            if(keynum_y == 2 && keynum_x == 4)
+ 142   3              key_x = 11;   //??????????(2,4)???,????????11,????11??“-”
+ 143   3            if(keynum_y == 3 && keynum_x == 1)
+ 144   3              key_x = 6;    //??????????(3,1)???,????????6
+ 145   3            if(keynum_y == 3 && keynum_x == 2)
+ 146   3              key_x = 7;    //??????????(3,2)???,????????7
+ 147   3            if(keynum_y == 3 && keynum_x == 3)
+ 148   3              key_x = 8;    //??????????(3,3)???,????????8
+ 149   3            if(keynum_y == 3 && keynum_x == 4)
+ 150   3              key_x = 12;   //??????????(3,4)???,????????12,????12??“*”
+ 151   3            if(keynum_y == 4 && keynum_x == 1)
+ 152   3              key_x = 9;    //??????????(4,1)???,????????9
+ 153   3            if(keynum_y == 4 && keynum_x == 2)
+ 154   3              key_x = 15;   //??????????(4,2)???,????????15,????15??“??”
+ 155   3            if(keynum_y == 4 && keynum_x == 3)
+ 156   3              key_x = 14;   //??????????(4,3)???,????????14,????14??“??”
+ 157   3            if(keynum_y == 4 && keynum_x == 4)
+ 158   3              key_x = 13;   //??????????(4,4)???,????????13,????11??“/”
+ 159   3            Cycle_count = Cycle_count + 1;
+ 160   3          }
+ 161   2          if(Cycle_count == 1 && key_x != 10 && key_x != 11 && key_x != 12 && key_x != 13 && key_x != 14 && key_x 
+             -!= 15)
+ 162   2            {
+ 163   3              key_xy = key_x;   //????????1??
+ 164   3              display[0] = smg_duan[key_xy];    //??
+ 165   3              smg_display();    ////????1??????
+ 166   3            }
+ 167   2          if(Cycle_count == 2 && key_x != 10 && key_x != 11 && key_x != 12 && key_x != 13 && key_x != 14 && key_x 
+             -!= 15)
+ 168   2            {
+ 169   3              key_xy = 10 * key_xy + key_x;   //??2?????2??
+ 170   3              display[1] = smg_duan[key_xy / 10];   //2?????
+ 171   3              display[0] = smg_duan[key_xy % 10];   //2?????
+ 172   3              smg_display();    //????2??????
+ 173   3            }
+ 174   2          if(Cycle_count == 3 && key_x != 10 && key_x != 11 && key_x != 12 && key_x != 13 && key_x != 14 && key_x 
+             -!= 15)
+ 175   2            {
+C51 COMPILER V9.54   ______1_0                                                             10/28/2018 14:36:33 PAGE 4   
+
+ 176   3              key_xy = 10 * key_xy + key_x;   //??3?????3??
+ 177   3              display[2] = smg_duan[key_xy / 100];    //3?????
+ 178   3              display[1] = smg_duan[key_xy / 10 % 10];    //3?????
+ 179   3              display[0] = smg_duan[key_xy % 100 % 10];   //3?????
+ 180   3              smg_display();    //????3??????
+ 181   3            }
+ 182   2          if(Cycle_count == 4 && key_x != 10 && key_x != 11 && key_x != 12 && key_x != 13 && key_x != 14 && key_x 
+             -!= 15)
+ 183   2            {
+ 184   3              key_xy = 10 * key_xy + key_x;   //??4?????4??
+ 185   3              display[2] = smg_duan[key_xy / 1000];   //4?????
+ 186   3              display[1] = smg_duan[key_xy / 100 % 10];   //4?????
+ 187   3              display[0] = smg_duan[key_xy % 1000 % 100 / 10];    //4?????
+ 188   3              display[0] = smg_duan[key_xy % 1000 % 100 % 10];    //4?????
+ 189   3              smg_display();    //????4??????
+ 190   3            }
+ 191   2        }while(key_x != 10 || key_x != 11 || key_x != 12 || key_x != 13 || key_x != 14 || key_x != 15);
+ 192   1        //????????????,??????,???????
+ 193   1        return key_xy;
+ 194   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1248    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     21       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,336 @@
+C51 COMPILER V9.54   ____                                                                  11/03/2018 20:25:42 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE ____
+OBJECT MODULE PLACED IN .\Objects\≤‚ ‘.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ≤‚ ‘.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\≤‚ ‘
+                    -.lst) TABS(2) OBJECT(.\Objects\≤‚ ‘.obj)
+
+line level    source
+
+   1          //???
+   2          #include <reg52.h>
+   3          #include <ctype.h>    // isdigit()??
+   4          #include <stdlib.h>   // atol??
+   5          //???
+   6          #define uint unsigned int
+   7          #define uchar unsigned char
+   8          #define ulint unsigned long int
+   9          //???
+  10          sbit LS_WEA = P1^0;
+  11          sbit LS_WEB = P1^1;
+  12          sbit LS_WEC = P1^2;   //74LS138??????
+  13          sbit LED = P1^3;    //LED
+  14          sbit BUZZER = P1^4;   //???
+  15          //????
+  16          uchar handle_x[9], handle_y[9];   //??????????,???????????
+  17          uchar code display[] = {
+  18              0x3f,  //  0
+  19              0x06,  //  1
+  20              0x5b,  //  2
+  21              0x4f,  //  3
+  22              0x66,  //  4
+  23              0x6d,  //  5
+  24              0x7d,  //  6
+  25              0x07,  //  7
+  26              0x7f,  //  8
+  27              0x6f,  //  9
+  28              0x00   //  ??
+  29          };                  //????,????
+  30          uchar display_cache[] = {
+  31                  10,
+  32                  10,
+  33                  10,
+  34                  10,
+  35                  10,
+  36                  10,
+  37                  10,
+  38                  10,
+  39                  10,
+  40          };                  //????
+  41          //????
+  42          void delay(uint z);         //????
+  43          ulint operation(ulint operand_xx,ulint operand_yy,uchar operator_z);
+  44                            //??,????x,???y,???????,??????
+  45          uchar keyscan();          //??????,?????????????,'@','#'?????????????
+  46          void cache(ulint input);      //?????????
+  47          void smg_display();         //??,??????????,??????138???
+  48          //???
+  49          void main()
+  50          {
+  51   1        ulint operand_x, operand_y, final_result; //???x,???y,????
+  52   1        uchar ckey, a = 0, b = 0;   //ckey=??????,a,b???0,?????????????????????????
+  53   1        uchar operator;         //???
+  54   1        uchar c, judge_operand_xy = 0;  //??????c,?????judge_operand_xy
+C51 COMPILER V9.54   ____                                                                  11/03/2018 20:25:42 PAGE 2   
+
+  55   1      init:               //goto??????
+  56   1        cache(0);           //???????
+  57   1        smg_display();
+  58   1        final_result = 0;
+  59   1        a = b = 0;
+  60   1        judge_operand_xy = 0;     //???
+  61   1        for(c = 0; c < 9; c++)
+  62   1        {
+  63   2          handle_x[c] = '\0';
+  64   2          handle_y[c] = '\0';
+  65   2        }               //???
+  66   1        while(1)
+  67   1        {
+  68   2          ckey = keyscan();     //????
+  69   2          if(ckey != '#')       //???????
+  70   2          {
+  71   3            if(isdigit(ckey))   //isdigit??,?????????,???TRUE,????NULL(0)
+  72   3            {
+  73   4              switch(judge_operand_xy)
+  74   4              {
+  75   5                case 0:
+  76   5                    handle_x[a] = ckey;     //????????????????????
+  77   5                    handle_x[a+1] = '\0';   //??'\0' : ASCII??0,????????????
+  78   5                    operand_x = atol(handle_x); //atol() ??,???????????????????????
+  79   5                    a++;
+  80   5                    cache(operand_x);     //????x??????
+  81   5                    smg_display();        //??
+  82   5                    break;
+  83   5                case 1:
+  84   5                    handle_y[b] = ckey;     //????????????????????
+  85   5                    handle_y[b+1] = '\0';   //??'\0' : ASCII??0,????????????
+  86   5                    operand_y = atol(handle_y); //atol() ??,???????????????????????
+  87   5                    b++;
+  88   5                    cache(operand_y);     //????y??????
+  89   5                    smg_display();        //??
+  90   5                    break;
+  91   5                default:break;
+  92   5              }
+  93   4            }
+  94   3            else if(ckey == '+' || ckey == '-' || ckey== '*' || ckey == '/')  //?????????'+','-','*','/'
+  95   3            {
+  96   4              judge_operand_xy = 1;   //??????=1,???switch()????????y??
+  97   4              operator = ckey;      //?????
+  98   4              cache(0);         //??????,??????
+  99   4              display_cache[7] = 10;    //??????
+ 100   4              smg_display();        //??
+ 101   4            }
+ 102   3            else if(ckey == '=')    //?????????'='
+ 103   3            {
+ 104   4              final_result = operation(operand_x,operand_y,operator);     //??????
+ 105   4              cache(final_result);    //???????????
+ 106   4              smg_display();        //??
+ 107   4              while(1)          //???????????
+ 108   4              {
+ 109   5                ckey = keyscan();
+ 110   5                if(ckey == '@')     //????????
+ 111   5                  goto init;      //????
+ 112   5                else          //?????????
+ 113   5                  {
+ 114   6                    cache(final_result);
+ 115   6                    smg_display();    //??????
+ 116   6                  }
+C51 COMPILER V9.54   ____                                                                  11/03/2018 20:25:42 PAGE 3   
+
+ 117   5              }
+ 118   4            }
+ 119   3            else if(ckey == '@')    //???????????
+ 120   3            {
+ 121   4              goto init;      //????
+ 122   4            }
+ 123   3          }
+ 124   2          smg_display();        //????????,??????
+ 125   2        }
+ 126   1      }
+ 127          //???
+ 128          //????
+ 129          void delay(uint z)
+ 130          {
+ 131   1        uint x, y;
+ 132   1        for(x = z; x > 0; x--)
+ 133   1          for(y = 120; y > 0; y--);
+ 134   1      }
+ 135          //??,????1,???2,???????,??????
+ 136          ulint operation(ulint operand_xx,ulint operand_yy,uchar operator_z)
+ 137          {
+ 138   1        ulint results;
+ 139   1        switch(operator_z)    //????
+ 140   1        {
+ 141   2          case '+' : results = operand_xx + operand_yy; break;
+ 142   2          case '-' : results = operand_xx - operand_yy; break;
+ 143   2          case '*' : results = operand_xx * operand_yy; break;
+ 144   2          case '/' : results = operand_xx / operand_yy; break;
+ 145   2          default :  break;
+ 146   2        }
+ 147   1        return results;
+ 148   1      }
+ 149          //??????,?????????????,'@','#'?????????????
+ 150          uchar keyscan()
+ 151          {
+ 152   1        uchar skey;                     //???????
+ 153   1      //?????1?
+ 154   1        P2 = 0x7f;            //?1??0
+ 155   1        if((P2 & 0x0f) != 0x0f)     //?????
+ 156   1        {
+ 157   2          delay(3);               //?????
+ 158   2          if((P2 & 0x0f) != 0x0f) //?????
+ 159   2          {
+ 160   3            LED = 0;        //??LED
+ 161   3            BUZZER = 0;       //????
+ 162   3            switch(P2)        //???????
+ 163   3            {
+ 164   4              case 0x77: skey = '7'; break; //0111 0111 1?1?
+ 165   4              case 0x7b: skey = '8'; break; //0111 1011 1?2?
+ 166   4              case 0x7d: skey = '9'; break; //0111 1101 1?3?
+ 167   4              case 0x7e: skey = '/'; break; //0111 1110 1?4?
+ 168   4              default:   skey = '#';      //??????
+ 169   4            }
+ 170   3            while((P2 & 0x0f) != 0x0f) //??????
+ 171   3              ;
+ 172   3            LED = 1;      //??LED
+ 173   3            BUZZER = 1;     //????
+ 174   3          }
+ 175   2        }
+ 176   1      //?????2?
+ 177   1        P2 = 0xbf;            //?2??0
+ 178   1        if((P2 & 0x0f) != 0x0f)
+C51 COMPILER V9.54   ____                                                                  11/03/2018 20:25:42 PAGE 4   
+
+ 179   1        {
+ 180   2          delay(3);
+ 181   2          if((P2 & 0x0f) != 0x0f)
+ 182   2          {
+ 183   3            LED = 0;        //??LED
+ 184   3            BUZZER = 0;       //????
+ 185   3            switch(P2)
+ 186   3            {
+ 187   4              case 0xb7: skey = '4'; break; //1011 0111 2?1?
+ 188   4              case 0xbb: skey = '5'; break; //1011 1011 2?2?
+ 189   4              case 0xbd: skey = '6'; break; //1011 1101 2?3?
+ 190   4              case 0xbe: skey = '*'; break; //1011 1110 2?4?
+ 191   4              default:   skey = '#';      //??????
+ 192   4            }
+ 193   3            while((P2 & 0x0f) != 0x0f) //??????
+ 194   3              ;
+ 195   3            LED = 1;      //??LED
+ 196   3            BUZZER = 1;     //????
+ 197   3          }
+ 198   2        }
+ 199   1      //?????3?
+ 200   1        P2 = 0xdf;            //?3??0
+ 201   1        if((P2 & 0x0f) != 0x0f)
+ 202   1        {
+ 203   2          delay(3);
+ 204   2          if((P2 & 0x0f) != 0x0f)
+ 205   2          {
+ 206   3            LED = 0;        //??LED
+ 207   3            BUZZER = 0;       //????
+ 208   3            switch(P2)
+ 209   3            {
+ 210   4              case 0xd7: skey = '1'; break; //1101 0111 3?1?
+ 211   4              case 0xdb: skey = '2'; break; //1101 1011 3?2?
+ 212   4              case 0xdd: skey = '3'; break; //1101 1101 3?3?
+ 213   4              case 0xde: skey = '-'; break; //1101 1110 3?4?
+ 214   4              default:   skey = '#';      //??????
+ 215   4            }
+ 216   3            while((P2 & 0x0f) != 0x0f) //??????
+ 217   3              ;
+ 218   3            LED = 1;      //??LED
+ 219   3            BUZZER = 1;     //????
+ 220   3          }
+ 221   2        }
+ 222   1      //?????4?
+ 223   1        P2 = 0xef;            //?4??0
+ 224   1        if((P2 & 0x0f) != 0x0f)
+ 225   1        {
+ 226   2          delay(3);
+ 227   2          if((P2 & 0x0f) != 0x0f)
+ 228   2          {
+ 229   3            LED = 0;        //??LED
+ 230   3            BUZZER = 0;       //????
+ 231   3            switch(P2)
+ 232   3            {
+ 233   4              case 0xe7: skey = '@'; break; //1110 0111 4?1?
+ 234   4              case 0xeb: skey = '0'; break; //1110 1011 4?2?
+ 235   4              case 0xed: skey = '='; break; //1110 1101 4?3?
+ 236   4              case 0xee: skey = '+'; break; //1110 1110 4?4?  
+ 237   4              default:   skey = '#';      //??????
+ 238   4            }
+ 239   3            while((P2 & 0x0f) != 0x0f) //??????
+ 240   3              ;
+C51 COMPILER V9.54   ____                                                                  11/03/2018 20:25:42 PAGE 5   
+
+ 241   3            LED = 1;      //??LED
+ 242   3            BUZZER = 1;     //????
+ 243   3          }
+ 244   2        }
+ 245   1        return skey;
+ 246   1      }
+ 247          //?????????
+ 248          void cache(ulint input)
+ 249          {
+ 250   1        uchar i;
+ 251   1        if(input == 0)
+ 252   1        {
+ 253   2          display_cache[7] = 0;       //??????,?????????
+ 254   2          i = 6;
+ 255   2        }
+ 256   1        else
+ 257   1          for(i = 7; input > 0; i--)
+ 258   1          {
+ 259   2            display_cache[i] = input % 10;  //???????????????
+ 260   2            input = input / 10;       //????????
+ 261   2          }
+ 262   1        for( ; i > 0; i--)
+ 263   1          display_cache[i] = 10;        //???????????????????
+ 264   1      }
+ 265          //??,??????????,??????138???
+ 266          void smg_display(void)
+ 267          {
+ 268   1        uchar n;
+ 269   1        for(n = 0; n < 8; n++)
+ 270   1        {
+ 271   2          switch(n)                   //??
+ 272   2          {
+ 273   3            case(0):
+ 274   3              LS_WEA = 0; LS_WEB = 0; LS_WEC = 0;   //Y7~Y0=1111 1110,??
+ 275   3            break;
+ 276   3            case(1):
+ 277   3              LS_WEA = 1; LS_WEB = 0; LS_WEC = 0;   //Y7~Y0=1111 1101,??
+ 278   3            break;
+ 279   3            case(2):
+ 280   3              LS_WEA = 0; LS_WEB = 1; LS_WEC = 0;   //Y7~Y0=1111 1011,??
+ 281   3            break;
+ 282   3            case(3):
+ 283   3              LS_WEA = 1; LS_WEB = 1; LS_WEC = 0;   //Y7~Y0=1111 0111,??
+ 284   3            break;
+ 285   3            case(4):
+ 286   3              LS_WEA = 0; LS_WEB = 0; LS_WEC = 1;   //Y7~Y0=1110 1111,??
+ 287   3            break;
+ 288   3            case(5):
+ 289   3              LS_WEA = 1; LS_WEB = 0; LS_WEC = 1;   //Y7~Y0=1101 1111,???
+ 290   3            break;
+ 291   3            case(6):
+ 292   3              LS_WEA = 0; LS_WEB = 1; LS_WEC = 1;   //Y7~Y0=1011 1111,???
+ 293   3            break;
+ 294   3            case(7):
+ 295   3              LS_WEA = 1; LS_WEB = 1; LS_WEC = 1;   //Y7~Y0=0111 1111,???
+ 296   3            break;
+ 297   3          }
+ 298   2          P3=display[display_cache[n]];           //????????
+ 299   2          delay(3);                   //??
+ 300   2          P3 = 0x00;                    //??
+ 301   2        }
+ 302   1      }
+C51 COMPILER V9.54   ____                                                                  11/03/2018 20:25:42 PAGE 6   
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1008    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     27      36
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

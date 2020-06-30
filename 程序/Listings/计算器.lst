@@ -1,0 +1,337 @@
+C51 COMPILER V9.54   ______                                                                11/06/2018 14:42:07 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE ______
+OBJECT MODULE PLACED IN .\Objects\¼ÆËãÆ÷.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ¼ÆËãÆ÷.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\¼Æ
+                    -ËãÆ÷.lst) TABS(2) OBJECT(.\Objects\¼ÆËãÆ÷.obj)
+
+line level    source
+
+   1          //Í·ÎÄ¼ş
+   2          #include <reg52.h>
+   3          #include <ctype.h>    //isdigit()º¯Êı
+   4          #include <stdlib.h>   //atol()º¯Êı
+   5          //ºê¶¨Òå
+   6          #define uint unsigned int
+   7          #define uchar unsigned char
+   8          #define ulint unsigned long
+   9          //Î»¶¨Òå
+  10          sbit LS_WEA = P1^0;
+  11          sbit LS_WEB = P1^1;
+  12          sbit LS_WEC = P1^2;   //74HC138ÒëÂëÆ÷Î»¶¨Òå
+  13          sbit LED = P1^3;    //LED
+  14          sbit BUZZER = P1^4;   //·äÃùÆ÷
+  15          //È«¾Ö±äÁ¿
+  16          uchar handle_x[9], handle_y[9];   //¼üÅÌ·µ»Ø×Ö·û´æ·ÅÊı×é£¬ÓÃÓÚ´æ·Å¼üÅÌ·µ»ØµÄ×Ö·û
+  17          uchar code display[] = {
+  18              0x3f,  //  0
+  19              0x06,  //  1
+  20              0x5b,  //  2
+  21              0x4f,  //  3
+  22              0x66,  //  4
+  23              0x6d,  //  5
+  24              0x7d,  //  6
+  25              0x07,  //  7
+  26              0x7f,  //  8
+  27              0x6f,  //  9
+  28              0x00   //  È«Ãğ
+  29          };//×Ö·ûÂë±í£¬¹²Òõ×Ö¶Î
+  30          uchar display_cache[] = {
+  31                  10,
+  32                  10,
+  33                  10,
+  34                  10,
+  35                  10,
+  36                  10,
+  37                  10,
+  38                  10,
+  39                  10,
+  40          };//ÏÔÊ¾»º´æ
+  41          //º¯ÊıÉùÃ÷
+  42          void delay(uint z);       //ÑÓÊ±º¯Êı
+  43          ulint operation(ulint operand_xx,ulint operand_yy,uchar operator_z);
+  44          //ÔËËã£¬½«ÔËËãÊıx£¬ÔËËãÊıy£¬ËÍÈëº¯Êı£¬·µ»ØÔËËã½á¹û
+  45          uchar keyscan();          //¼üÅÌÉ¨Ãè³ÌĞò£¬'@','#'·Ö±ğ±íÊ¾ÇåÁãºÍÃ»ÓĞ°´¼ü°´ÏÂ
+  46          void cache(ulint input);  //½«ÊäÈëËÍÈëÏÔÊ¾»º´æ
+  47          void smg_display();       //ÏÔÊ¾£¬¹²Òõ¼«ÊıÂë¹ÜÎ»Ñ¡ÏÔÊ¾£¬ÅäºÏÈı¼«¹Ü¼°138ÒëÂëÆ÷
+  48          //Ö÷º¯Êı
+  49          void main()
+  50          {
+  51   1        ulint operand_x, operand_y, final_result; //ÔËËãÊıx£¬ÔËËãÊıy£¬×îÖÕ½á¹û
+  52   1        uchar ckey, a = 0, b = 0;   //ckey=¼üÅÌ·µ»Ø×Ö·û£¬a£¬b³õÖµÎªÁã£¬Í¨¹ıÑ­»·ÊµÏÖ½«ÊäÈëµÄÊı×ÖÒÔ×Ö·ûµÄĞÎÊ½´æ·ÅÖÁ¼
+             -üÅÌ×Ö·û´æ·ÅÊı×é
+  53   1        uchar operator;             //ÔËËã·û
+C51 COMPILER V9.54   ______                                                                11/06/2018 14:42:07 PAGE 2   
+
+  54   1        uchar c, judge_operand_xy = 0;  //Ñ­»·Ìå±êÖ¾Êıc£¬±»ÔËËãÅĞ¶ÏÊıjudge_operand_xy
+  55   1      init:               //gotoÓï¾ä¶¨Î»±êÇ©
+  56   1        cache(0);         //³õÊ¼»¯ÏÔÊ¾»º´æ
+  57   1        smg_display();
+  58   1        final_result = 0;
+  59   1        a = b = 0;
+  60   1        judge_operand_xy = 0;     //³õÊ¼»¯
+  61   1        for(c = 0; c < 9; c++)
+  62   1        {
+  63   2          handle_x[c] = '\0';
+  64   2          handle_y[c] = '\0';
+  65   2        }               //???
+  66   1        while(1)
+  67   1        {
+  68   2          ckey = keyscan();     //³õÊ¼»¯
+  69   2          if(ckey != '#')       //Èç¹û¼üÅÌ±»°´ÏÂ
+  70   2          {
+  71   3            if(isdigit(ckey))   //isdigitº¯Êı,Èô²ÎÊıÎª°¢À­²®Êı×Ö£¬Ôò·µ»ØTRUE(Õæ),·ñÔò·µ»ØNULL(0)
+  72   3            {
+  73   4              switch(judge_operand_xy)
+  74   4              {
+  75   5                case 0:
+  76   5                    handle_x[a] = ckey;     //½«¼üÅÌ·µ»Ø×Ö·û´æ·ÅÖÁ¼üÅÌ·µ»Ø×Ö·û´æ·ÅÊı×é
+  77   5                    handle_x[a+1] = '\0';   //×Ö·û'\0' : ASCIIÂëÎª0,±íÊ¾Ò»¸ö×Ö·û´®½áÊø
+  78   5                    operand_x = atol(handle_x); //atol()º¯Êı,½«¼üÅÌ·µ»Ø×Ö·û´æ·ÅÊı×éÖĞµÄ×Ö·û´®×ª»»³É³¤ÕûĞÍÊı
+  79   5                    a++;
+  80   5                    cache(operand_x);     //½«ÔËËãÊıxËÍÈëÏÔÊ¾»º´æ
+  81   5                    smg_display();        //ÏÔÊ¾
+  82   5                    break;
+  83   5                case 1:
+  84   5                    handle_y[b] = ckey;     //½«¼üÅÌ·µ»Ø×Ö·û´æ·ÅÖÁ¼üÅÌ·µ»Ø×Ö·û´æ·ÅÊı×é
+  85   5                    handle_y[b+1] = '\0';   //×Ö·û'\0' : ASCIIÂëÎª0£¬±íÊ¾Ò»¸ö×Ö·û´®½áÊø
+  86   5                    operand_y = atol(handle_y); //atol()º¯Êı,½«¼üÅÌ·µ»Ø×Ö·û´æ·ÅÊı×éÖĞµÄ×Ö·û´®×ª»»³É³¤ÕûĞÍÊı
+  87   5                    b++;
+  88   5                    cache(operand_y);     //½«ÔËËãÊıyËÍÈëÏÔÊ¾»º´æ
+  89   5                    smg_display();        //ÏÔÊ¾
+  90   5                    break;
+  91   5                default:break;
+  92   5              }
+  93   4            }
+  94   3            else if(ckey == '+' || ckey == '-' || ckey== '*' || ckey == '/')  //Èç¹û¼üÅÌ·µ»Ø×Ö·ûÎª'+','-','*','/'
+  95   3            {
+  96   4              judge_operand_xy = 1;//Áî±»ÔËËãÅĞ¶ÏÊı=1,´«µİ¸øswitch()º¯Êı£¬×¼±¸ÎªÔËËãÊıy¸³Öµ
+  97   4              operator = ckey;     //±£´æÔËËã·û
+  98   4              cache(0);            //Çå¿ÕÏÔÊ¾»º´æ
+  99   4              display_cache[8] = 10;    //ÏÔÊ¾»º´æÎª¿Õ
+ 100   4              smg_display();        //ÏÔÊ¾
+ 101   4            }
+ 102   3            else if(ckey == '=')    //Èç¹û°´¼ü·µ»Ø×Ö·ûÎª'='
+ 103   3            {
+ 104   4              final_result = operation(operand_x,operand_y,operator); //¼ÆËã×îÖÕ½á¹û
+ 105   4              cache(final_result);    //½«×îÖÕ½á¹ûËÍÈëÏÔÊ¾»º´æ
+ 106   4              smg_display();        //ÏÔÊ¾
+ 107   4              while(1)          //¼ÆËã½áÊøµÈ´ıÇåÁã°´¼ü°´ÏÂ
+ 108   4              {
+ 109   5                ckey = keyscan();
+ 110   5                if(ckey == '@')     //Èç¹ûÇåÁã¼ü±»°´ÏÂ
+ 111   5                  goto init;      //¿ªÊ¼Ìø×ª
+ 112   5                else          //Èç¹ûÇåÁã¼üÃ»±»°´ÏÂ
+ 113   5                  {
+ 114   6                    cache(final_result);
+ 115   6                    smg_display();    //¼ÌĞøÏÔÊ¾½á¹û
+C51 COMPILER V9.54   ______                                                                11/06/2018 14:42:07 PAGE 3   
+
+ 116   6                  }
+ 117   5              }
+ 118   4            }
+ 119   3            else if(ckey == '@')    //Èç¹û°´¼ü·µ»Ø×Ö·ûÎªÇåÁã
+ 120   3            {
+ 121   4              goto init;      //Ìø×ª
+ 122   4            }
+ 123   3          }
+ 124   2          smg_display();        //Èç¹û°´¼üÃ»±»°´ÏÂ£¬ÔòÏÔÊ¾³õÊ¼Öµ
+ 125   2        }
+ 126   1      }
+ 127          //×Óº¯Êı
+ 128          //ÑÓÊ±º¯Êı
+ 129          void delay(uint z)
+ 130          {
+ 131   1        uint x, y;
+ 132   1        for(x = z; x > 0; x--)
+ 133   1          for(y = 120; y > 0; y--);
+ 134   1      }
+ 135          //ÔËËã£¬½«ÔËËãÊıx£¬ÔËËãÊıy£¬ËÍÈëº¯Êı£¬·µ»ØÔËËã½á¹û
+ 136          ulint operation(ulint operand_xx,ulint operand_yy,uchar operator_z)
+ 137          {
+ 138   1        ulint results;
+ 139   1        switch(operator_z)    //ÅĞ¶Ï·ûºÅ
+ 140   1        {
+ 141   2          case '+' : results = operand_xx + operand_yy; break;
+ 142   2          case '-' : results = operand_xx - operand_yy; break;
+ 143   2          case '*' : results = operand_xx * operand_yy; break;
+ 144   2          case '/' : results = operand_xx / operand_yy; break;
+ 145   2          default :  break;
+ 146   2        }
+ 147   1        return results;
+ 148   1      }
+ 149          //¼üÅÌÉ¨Ãè³ÌĞò£¬'@','#'·Ö±ğ±íÊ¾ÇåÁãºÍÃ»ÓĞ°´¼ü°´ÏÂ
+ 150          uchar keyscan()
+ 151          {
+ 152   1        uchar skey;                     //°´¼üÖµ±ê¼Ç±äÁ¿
+ 153   1      //É¨Ãè¼üÅÌµÚ1ĞĞ
+ 154   1        P2 = 0x7f;            //µÚ1ĞĞÎª0
+ 155   1        if((P2 & 0x0f) != 0x0f)     //ÓĞ°¸¼ş°´ÏÂ
+ 156   1        {
+ 157   2          delay(3);               //È¥¶¶¶¯ÑÓÊ±
+ 158   2          if((P2 & 0x0f) != 0x0f) //ÈÔÓĞ°´¼ü°´ÏÂ
+ 159   2          {
+ 160   3            LED = 0;        //µãÁÁLED
+ 161   3            BUZZER = 0;     //·äÃùÆ÷Ïì
+ 162   3            switch(P2)      //Ê¶±ğ°¸¼ş²¢¸³Öµ
+ 163   3            {
+ 164   4              case 0x77: skey = '7'; break; //0111 0111 1ĞĞ1ÁĞ
+ 165   4              case 0x7b: skey = '8'; break; //0111 1011 1ĞĞ2ÁĞ
+ 166   4              case 0x7d: skey = '9'; break; //0111 1101 1ĞĞ3ÁĞ
+ 167   4              case 0x7e: skey = '/'; break; //0111 1110 1ĞĞ4ÁĞ
+ 168   4              default:   skey = '#';        //Ã»ÓĞ°´¼ü°´ÏÂ
+ 169   4            }
+ 170   3            while((P2 & 0x0f) != 0x0f) //µÈ´ı°´¼üËÉ¿ª
+ 171   3              ;
+ 172   3            LED = 1;      //Ï¨ÃğLED
+ 173   3            BUZZER = 1;   //·äÃùÆ÷¾²
+ 174   3          }
+ 175   2        }
+ 176   1      //É¨Ãè¼üÅÌµÚ2ĞĞ
+ 177   1        P2 = 0xbf;        //µÚ2ĞĞÎª0
+C51 COMPILER V9.54   ______                                                                11/06/2018 14:42:07 PAGE 4   
+
+ 178   1        if((P2 & 0x0f) != 0x0f)
+ 179   1        {
+ 180   2          delay(3);
+ 181   2          if((P2 & 0x0f) != 0x0f)
+ 182   2          {
+ 183   3            LED = 0;        //µãÁÁLED
+ 184   3            BUZZER = 0;     //·äÃùÆ÷Ïì
+ 185   3            switch(P2)
+ 186   3            {
+ 187   4              case 0xb7: skey = '4'; break; //1011 0111 2ĞĞ1ÁĞ
+ 188   4              case 0xbb: skey = '5'; break; //1011 1011 2ĞĞ2ÁĞ
+ 189   4              case 0xbd: skey = '6'; break; //1011 1101 2ĞĞ3ÁĞ
+ 190   4              case 0xbe: skey = '*'; break; //1011 1110 2ĞĞ4ÁĞ
+ 191   4              default:   skey = '#';        //Ã»ÓĞ°´¼ü°´ÏÂ
+ 192   4            }
+ 193   3            while((P2 & 0x0f) != 0x0f) //µÈ´ı°´¼üËÉ¿ª
+ 194   3              ;
+ 195   3            LED = 1;      //Ï¨ÃğLED
+ 196   3            BUZZER = 1;   //·äÃùÆ÷¾²
+ 197   3          }
+ 198   2        }
+ 199   1      //É¨Ãè¼üÅÌµÚ3ĞĞ
+ 200   1        P2 = 0xdf;        //µÚ3ĞĞÎª0
+ 201   1        if((P2 & 0x0f) != 0x0f)
+ 202   1        {
+ 203   2          delay(3);
+ 204   2          if((P2 & 0x0f) != 0x0f)
+ 205   2          {
+ 206   3            LED = 0;        //µãÁÁLED
+ 207   3            BUZZER = 0;     //·äÃùÆ÷Ïì
+ 208   3            switch(P2)
+ 209   3            {
+ 210   4              case 0xd7: skey = '1'; break; //1101 0111 3ĞĞ1ÁĞ
+ 211   4              case 0xdb: skey = '2'; break; //1101 1011 3ĞĞ2ÁĞ
+ 212   4              case 0xdd: skey = '3'; break; //1101 1101 3ĞĞ3ÁĞ
+ 213   4              case 0xde: skey = '-'; break; //1101 1110 3ĞĞ4ÁĞ
+ 214   4              default:   skey = '#';        //Ã»ÓĞ°´¼ü°´ÏÂ
+ 215   4            }
+ 216   3            while((P2 & 0x0f) != 0x0f) //µÈ´ı°´¼üËÉ¿ª
+ 217   3              ;
+ 218   3            LED = 1;      //Ï¨ÃğLED
+ 219   3            BUZZER = 1;   //·äÃùÆ÷¾²
+ 220   3          }
+ 221   2        }
+ 222   1      //É¨Ãè¼üÅÌ4ĞĞ
+ 223   1        P2 = 0xef;        //µÚ4ĞĞÎª0
+ 224   1        if((P2 & 0x0f) != 0x0f)
+ 225   1        {
+ 226   2          delay(3);
+ 227   2          if((P2 & 0x0f) != 0x0f)
+ 228   2          {
+ 229   3            LED = 0;        //µãÁÁLED
+ 230   3            BUZZER = 0;     //·äÃùÆ÷Ïì
+ 231   3            switch(P2)
+ 232   3            {
+ 233   4              case 0xe7: skey = '@'; break; //1110 0111 4ĞĞ1ÁĞ
+ 234   4              case 0xeb: skey = '0'; break; //1110 1011 4ĞĞ2ÁĞ
+ 235   4              case 0xed: skey = '='; break; //1110 1101 4ĞĞ3ÁĞ
+ 236   4              case 0xee: skey = '+'; break; //1110 1110 4ĞĞ4ÁĞ
+ 237   4              default:   skey = '#';        //Ã»ÓĞ°´¼ü°´ÏÂ
+ 238   4            }
+ 239   3            while((P2 & 0x0f) != 0x0f) //µÈ´ı°´¼üËÉ¿ª
+C51 COMPILER V9.54   ______                                                                11/06/2018 14:42:07 PAGE 5   
+
+ 240   3              ;
+ 241   3            LED = 1;      //Ï¨ÃğLED
+ 242   3            BUZZER = 1;   //·äÃùÆ÷¾²
+ 243   3          }
+ 244   2        }
+ 245   1        return skey;
+ 246   1      }
+ 247          //½«ÊäÈëËÍÈëÏÔÊ¾»º´æ
+ 248          void cache(ulint input)
+ 249          {
+ 250   1        uchar i;
+ 251   1        if(input == 0)
+ 252   1        {
+ 253   2          display_cache[0] = 0;       //Èç¹ûÊäÈëÎª0£¬Ôò½«0ËÍÈëÏÔÊ¾»º´æ
+ 254   2          i = 1;
+ 255   2        }
+ 256   1        else
+ 257   1          for(i = 0; input > 0; i++)
+ 258   1          {
+ 259   2            display_cache[i] = input % 10;  //È¡µÃÊäÈëµÄ×îµÍÎ»²¢ËÍÈëÏÔÊ¾»º´æ
+ 260   2            input = input / 10;       //¶ªÆúÊäÈëµÄ×îµÍÎ»
+ 261   2          }
+ 262   1        for( ; i < 8; i++)
+ 263   1          display_cache[i] = 10;      //ÎŞÊäÈë»òÕßÎŞÏÔÊ¾Î»Ôò½«È«Ãğ×´Ì¬ËÍÈë»º´æ
+ 264   1      }
+ 265          //ÏÔÊ¾£¬¹²Òõ¼«ÊıÂë¹ÜÎ»Ñ¡ÏÔÊ¾£¬ÅäºÏÈı¼«¹Ü¼°138ÒëÂëÆ÷
+ 266          void smg_display(void)
+ 267          {
+ 268   1        uchar i;
+ 269   1        for(i = 0; i < 8; i++)
+ 270   1        {
+ 271   2          switch(i)                   //Î»Ñ¡
+ 272   2          {
+ 273   3            case(0):
+ 274   3              LS_WEA = 1; LS_WEB = 1; LS_WEC = 1;   //ABC=000,Y7~Y0=1111 1110,¸öÎ»
+ 275   3            break;
+ 276   3            case(1):
+ 277   3              LS_WEA = 0; LS_WEB = 1; LS_WEC = 1;   //ABC=100,Y7~Y0=1111 1101,Ê®Î»
+ 278   3            break;
+ 279   3            case(2):
+ 280   3              LS_WEA = 1; LS_WEB = 0; LS_WEC = 1;   //ABC=010,Y7~Y0=1111 1011,°ÙÎ»
+ 281   3            break;
+ 282   3            case(3):
+ 283   3              LS_WEA = 0; LS_WEB = 0; LS_WEC = 1;   //ABC=110,Y7~Y0=1111 0111,Ç§Î»
+ 284   3            break;
+ 285   3            case(4):
+ 286   3              LS_WEA = 1; LS_WEB = 1; LS_WEC = 0;   //ABC=001,Y7~Y0=1110 1111,ÍòÎ»
+ 287   3            break;
+ 288   3            case(5):
+ 289   3              LS_WEA = 0; LS_WEB = 1; LS_WEC = 0;   //ABC=101,Y7~Y0=1101 1111,Ê®ÍòÎ»
+ 290   3            break;
+ 291   3            case(6):
+ 292   3              LS_WEA = 1; LS_WEB = 0; LS_WEC = 0;   //ABC=011,Y7~Y0=1011 1111,°ÙÍòÎ»
+ 293   3            break;
+ 294   3            case(7):
+ 295   3              LS_WEA = 0; LS_WEB = 0; LS_WEC = 0;   //ABC=111,Y7~Y0=0111 1111,Ç§ÍòÎ»
+ 296   3            break;
+ 297   3          }
+ 298   2          P3=display[display_cache[i]]; //ÏÔÊ¾»º´æËÍÈëÏÔÊ¾
+ 299   2          delay(3);                     //ÑÓÊ±
+ 300   2          P3 = 0x00;                    //ÏûÒş
+ 301   2        }
+C51 COMPILER V9.54   ______                                                                11/06/2018 14:42:07 PAGE 6   
+
+ 302   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1008    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     27      36
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
