@@ -5,7 +5,7 @@
 ## 仿真如下图
 
 <div style="text-align: center">
-<img src="url"/>
+<img src="https://github.com/rtrrsr/Calculator-based-for-89C51/blob/master/%E4%BB%BF%E7%9C%9F.png"/>
 </div>
 
 ## 仿真演示视频
